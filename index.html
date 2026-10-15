@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>FoodLoop: pass surplus food on before it goes to waste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=Figtree:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F1F5EF;--surf:#FFFFFF;--ink:#13261F;--mute:#465B51;--line:#C5D4C9;--brand:#0B5D46;--brand-ink:#FFFFFF;--tag:#FFD84D;--tag-ink:#3A2E00;--warn:#B3261E;--focus:#0B5D46;
+--head:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;--text:"Figtree","Segoe UI",system-ui,sans-serif;
+color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1A16;--surf:#15261F;--ink:#EAF3EE;--mute:#A6BBB0;--line:#2B4237;--brand:#55D3A4;--brand-ink:#06261B;--tag:#E6B92E;--tag-ink:#2A2000;--warn:#FF8A80;--focus:#55D3A4;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1A16;--surf:#15261F;--ink:#EAF3EE;--mute:#A6BBB0;--line:#2B4237;--brand:#55D3A4;--brand-ink:#06261B;--tag:#E6B92E;--tag-ink:#2A2000;--warn:#FF8A80;--focus:#55D3A4;color-scheme:dark}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 72px);scroll-behavior:smooth}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1.0625rem/1.6 var(--text)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--surf);z-index:30}
+h1,h2,h3{font-family:var(--head);line-height:1.1;margin:0;letter-spacing:-.01em}
+a{color:var(--brand)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+.skip{position:absolute;left:12px;top:-60px;background:var(--brand);color:var(--brand-ink);padding:8px 14px;z-index:50;border-radius:6px}
+.skip:focus{top:calc(env(safe-area-inset-top,0px) + 8px)}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;background:var(--surf);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;gap:16px;min-height:64px;flex-wrap:wrap;padding-block:6px}
+.logo{display:flex;align-items:center;gap:8px;font:800 1.35rem var(--head);color:var(--ink);text-decoration:none;margin-right:auto}
+.logo svg{width:28px;height:28px}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav a{color:var(--ink);text-decoration:none;padding:8px 12px;border-radius:8px;font-weight:500}
+nav a:hover{background:var(--bg)}
+button{font:inherit;cursor:pointer}
+.ghost{background:none;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:8px 12px;min-height:40px}
+.btn{background:var(--brand);color:var(--brand-ink);border:0;border-radius:10px;padding:12px 20px;font-weight:700;min-height:44px;text-decoration:none;display:inline-block}
+.btn.alt{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+section{padding:64px 0}
+.hero{padding:56px 0 40px}
+.hero .wrap{display:grid;gap:40px;grid-template-columns:1.25fr 1fr;align-items:center}
+.hero h1{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:800}
+.hero p{max-width:34em;color:var(--mute);margin:20px 0 28px;font-size:1.15rem}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.soon{background:var(--tag);color:var(--tag-ink);padding:28px 28px 28px 44px;border-radius:6px 28px 28px 6px;position:relative;transform:rotate(-2deg);box-shadow:0 8px 0 var(--brand)}
+.soon::before{content:"";position:absolute;left:14px;top:50%;width:16px;height:16px;margin-top:-8px;border-radius:50%;background:var(--bg);box-shadow:inset 0 1px 2px rgba(0,0,0,.35)}
+.soon small{font-weight:700;display:block}
+.soon .t{font:800 clamp(2.4rem,6vw,3.6rem) var(--head);display:block;line-height:1;margin:8px 0}
+.soon span{display:block}
+.loopmark{animation:spin 14s linear infinite;transform-origin:50% 50%}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.loopmark{animation:none}html{scroll-behavior:auto}}
+h2{font-size:clamp(1.8rem,4vw,2.6rem);margin-bottom:12px}
+.lead{color:var(--mute);max-width:40em;margin:0 0 28px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px}
+.chip{background:var(--surf);border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:8px 16px;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.board{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));list-style:none;margin:0;padding:0}
+.item{display:grid;grid-template-columns:84px 1fr;background:var(--surf);border:1px solid var(--line);border-radius:6px 18px 18px 6px;overflow:hidden}
+.item .n{background:var(--tag);color:var(--tag-ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font:800 2rem var(--head);position:relative;padding:8px 0}
+.item .n small{font:700 .72rem var(--text)}
+.item .n::before{content:"";position:absolute;top:10px;left:50%;margin-left:-6px;width:12px;height:12px;border-radius:50%;background:var(--surf);box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+.item .b{padding:14px 16px}
+.item h3{font-size:1.2rem;margin-bottom:4px}
+.meta{color:var(--mute);font-size:.95rem;margin:0 0 10px}
+.left{font-weight:700}
+.left.urgent{color:var(--warn)}
+.item .btn{padding:8px 16px;min-height:40px;font-size:.95rem}
+.empty{padding:28px;border:2px dashed var(--line);border-radius:12px;color:var(--mute)}
+.post{margin-top:40px;background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:28px}
+.post h3{font-size:1.5rem;margin-bottom:16px}
+.fields{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+label{display:block;font-weight:700;margin-bottom:6px;font-size:.95rem}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--mute);border-radius:8px;padding:10px 12px;min-height:44px}
+.err{color:var(--warn);font-weight:700;margin:12px 0 0;min-height:1.5em}
+.band{background:var(--brand);color:var(--brand-ink)}
+.band .lead{color:inherit;opacity:.9}
+.stats{display:grid;gap:24px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0 28px}
+.stats b{display:block;font:800 clamp(2.2rem,5vw,3.2rem) var(--head);line-height:1.05}
+.prog{height:14px;border-radius:7px;background:rgba(255,255,255,.28);overflow:hidden;max-width:560px}
+.prog i{display:block;height:100%;background:var(--tag);width:0;transition:width .6s}
+.band small{display:block;margin-top:10px;opacity:.9;max-width:44em}
+.tipbox{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:24px;max-width:640px}
+.tipbox h3{font-size:1.25rem;margin:16px 0 4px}
+.tipbox p{margin:0 0 8px;color:var(--mute)}
+.two{display:grid;gap:32px;grid-template-columns:1fr 1fr}
+footer{border-top:1px solid var(--line);padding:32px 0;color:var(--mute);font-size:.95rem}
+footer .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:space-between}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:10px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .25s;z-index:60;max-width:90vw}
+.toast.on{opacity:1}
+@media (max-width:760px){.hero .wrap,.two{grid-template-columns:1fr}.soon{transform:none}section{padding:44px 0}}
+.tools{display:grid;gap:16px;grid-template-columns:2fr 1fr;max-width:640px;margin-bottom:20px}
+.mine{margin-top:32px}.mine h3{font-size:1.4rem}.mine ul{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:10px}
+.mine li{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;background:var(--surf);border:2px solid var(--brand);border-radius:12px;padding:12px 16px}
+.code{background:var(--tag);color:var(--tag-ink);padding:2px 8px;border-radius:4px;letter-spacing:.08em}
+.calc input[type=range]{padding:0;min-height:32px;accent-color:var(--brand);border:0;background:none}
+@media (max-width:520px){.tools{grid-template-columns:1fr}}
+.ph{display:block;width:100%;height:140px;object-fit:cover}.ph[hidden]{display:none}.item .b .ph{border-radius:8px;margin-bottom:10px}
+.pc{background:var(--surf);border:1px solid var(--line);border-radius:18px;padding:24px}
+.pts{font:800 3rem var(--head);line-height:1}
+.lv{height:12px;border-radius:6px;background:var(--line);overflow:hidden}.lv i{display:block;height:100%;background:var(--brand);width:0;transition:width .5s}
+.badges{display:flex;gap:8px;flex-wrap:wrap;list-style:none;padding:0;margin:12px 0 0}
+.badges li{border:2px dashed var(--line);border-radius:999px;padding:4px 12px;font-size:.9rem;color:var(--mute)}.badges li.on{border:2px solid var(--brand);background:var(--tag);color:var(--tag-ink);font-weight:700}
+.lb{list-style:none;padding:0;margin:12px 0 8px;display:grid;gap:8px}.lb li{display:flex;justify-content:space-between;padding:10px 14px;border-radius:10px;background:var(--surf);border:1px solid var(--line)}.lb li.me{border:2px solid var(--brand);font-weight:700}
+</style>
+</head>
+<body>
+<a class="skip" href="#board">Skip to the food board</a>
+<header>
+ <div class="wrap bar">
+  <a class="logo" href="#top" aria-label="FoodLoop home">
+   <svg class="loopmark" viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="11" fill="none" stroke="var(--brand)" stroke-width="4" stroke-dasharray="52 17"/><path d="M26 3v9h-9z" fill="var(--brand)"/></svg>
+   FoodLoop
+  </a>
+  <nav aria-label="Main">
+   <a href="#board">Food board</a><a href="#play">Play</a><a href="#impact">Impact</a><a href="#tips">Keep it fresh</a><a href="#why">Why it matters</a>
+  </nav>
+  <button class="ghost" id="theme" type="button" aria-label="Switch colour theme">Theme</button>
+ </div>
+</header>
+
+<main id="top">
+<section class="hero">
+ <div class="wrap">
+  <div>
+   <h1>Pass it on before it goes off.</h1>
+   <p>Cafés, hostels and students often have good food left at the end of the day. FoodLoop lists it for neighbours who can pick it up before the pickup time runs out.</p>
+   <div class="cta"><a class="btn" href="#board">See what's available</a><a class="btn alt" href="#share">Share surplus food</a></div>
+  </div>
+  <div class="soon" aria-live="off" id="soon">
+   <small>Closing soonest</small><span class="t" id="soonT">-</span><span id="soonN">Loading the board...</span>
+  </div>
+ </div>
+</section>
+
+<section id="board" aria-labelledby="bh" style="padding-top:24px">
+ <div class="wrap">
+  <h2 id="bh">Food board</h2>
+  <p class="lead">Claim one portion at a time and collect it before the time is up. Earn 5 points for each claim and 10 for each share (+5 with a photo). These are sample listings for the prototype.</p>
+  <div class="tools"><div><label for="sq">Search food or place</label><input id="sq" type="search" placeholder="e.g. rice or library"></div><div><label for="so">Sort by</label><select id="so"><option value="soon">Closing soonest</option><option value="most">Most portions</option></select></div></div>
+  <div class="chips" role="group" aria-label="Filter by food type" id="chips"></div>
+  <ul class="board" id="list"></ul>
+  <div class="mine" id="mine" aria-live="polite"></div>
+
+  <form class="post" id="share" novalidate aria-labelledby="ph">
+   <h3 id="ph">Share surplus food</h3>
+   <div class="fields">
+    <div><label for="fn">Food</label><input id="fn" maxlength="40" required placeholder="e.g. Vegetable curry boxes"></div>
+    <div><label for="fq">Portions</label><input id="fq" type="number" min="1" max="50" value="4" required></div>
+    <div><label for="fc">Type</label><select id="fc"><option>Meals</option><option>Bakery</option><option>Fruit &amp; veg</option><option>Drinks</option></select></div>
+    <div><label for="fl">Pickup point</label><input id="fl" maxlength="40" required placeholder="e.g. Library lobby"></div>
+    <div><label for="ft">Pickup closes in</label><select id="ft"><option value="30">30 minutes</option><option value="60" selected>1 hour</option><option value="120">2 hours</option><option value="240">4 hours</option></select></div>
+   </div>
+   <div style="margin-top:16px"><label for="fp">Add a photo (optional, +5 bonus points)</label><input id="fp" type="file" accept="image/*"><img id="pv" class="ph" alt="" hidden style="max-width:240px;margin-top:10px;border-radius:8px"></div>
+   <p class="err" id="err" role="alert"></p>
+   <button class="btn" type="submit">Post and earn points</button>
+  </form>
+ </div>
+</section>
+
+<section id="play" aria-labelledby="gh"><div class="wrap">
+ <h2 id="gh">Play: earn points, spread the word</h2>
+ <p class="lead">Share food, claim food and answer food-waste questions to level up. Every action is a small win against waste.</p>
+ <div class="two">
+  <div class="pc"><label for="nick">Your nickname</label><input id="nick" maxlength="16" placeholder="e.g. RiceRanger"><p style="margin:16px 0 0"><span class="pts" id="pp">0</span> points</p><p id="pl" style="margin:4px 0 8px;font-weight:700"></p><div class="lv" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="100" id="lvb"><i id="lvf"></i></div><p id="pn" class="meta" style="margin-top:8px"></p><h3 style="font-size:1.1rem;margin-top:12px">Badges</h3><ul class="badges" id="bd"></ul><button class="btn" type="button" id="shr" style="margin-top:16px">Copy my score to share</button></div>
+  <div><h3 style="font-size:1.5rem">Leaderboard</h3><ol class="lb" id="lb"></ol><small>Other players are sample data.</small></div>
+ </div>
+ <div class="pc" style="margin-top:32px"><h3 style="font-size:1.4rem;margin-bottom:16px">Food waste challenge: +5 points per right answer</h3><div id="qz"></div></div>
+</div></section>
+
+<section class="band" id="impact" aria-labelledby="ih">
+ <div class="wrap">
+  <h2 id="ih">What the loop has saved</h2>
+  <p class="lead">Every claimed portion counts as one meal kept out of the bin.</p>
+  <div class="stats">
+   <div><b id="sM">0</b>meals shared</div>
+   <div><b id="sK">0</b>kg of food saved</div>
+   <div><b id="sC">0</b>kg CO&#8322;e avoided</div>
+  </div>
+  <div class="prog" role="progressbar" aria-label="Progress to the 500 meal goal" aria-valuemin="0" aria-valuemax="500" id="pb"><i id="pf"></i></div>
+  <small id="pt"></small>
+  <small>Estimates: 1 meal is about 0.4 kg of food and 1 kg of food waste is about 2.5 kg CO&#8322;e. Figures start from sample data until real pilot results replace them.</small>
+ </div>
+</section>
+
+<section class="calc" id="calc" aria-labelledby="ch" style="padding-bottom:0"><div class="wrap"><h2 id="ch">What do you throw away?</h2><p class="lead">Slide to the number of meals' worth of food you bin each week.</p><div class="tipbox"><label for="cw">Meals binned per week: <b id="cv">3</b></label><input id="cw" type="range" min="0" max="20" value="3"><p id="cr" aria-live="polite" style="margin-top:12px;color:var(--ink);font-weight:700"></p></div></div></section>
+
+<section id="tips" aria-labelledby="th">
+ <div class="wrap">
+  <h2 id="th">Keep it fresh</h2>
+  <p class="lead">Check how to store common leftovers so they stay safe until someone picks them up.</p>
+  <div class="tipbox">
+   <label for="ts">Choose a food</label>
+   <select id="ts"></select>
+   <h3 id="tt"></h3><p id="tp"></p>
+   <p style="font-size:.9rem">General guidance only. Always follow the label, and share only food that is safe to eat.</p>
+  </div>
+ </div>
+</section>
+
+<section id="why" aria-labelledby="wh" style="padding-top:0">
+ <div class="wrap two">
+  <div>
+   <h2 id="wh">Why it matters</h2>
+   <p>FoodLoop supports UN Sustainable Development Goal 12.3: halve food waste per person at retail and consumer level by 2030, and cut food losses along supply chains.</p>
+   <p>Food that is thrown away also wastes the water, energy and money used to grow, cook and carry it.</p>
+  </div>
+  <div>
+   <h3 style="font-size:1.5rem;margin-bottom:12px">How it works</h3>
+   <ol style="padding-left:20px;margin:0">
+    <li>A café, hall or student posts what is left and a pickup time.</li>
+    <li>Someone nearby claims a portion.</li>
+    <li>They collect it before the timer runs out.</li>
+    <li>The impact counter adds one meal saved.</li>
+   </ol>
+  </div>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <span>FoodLoop is a student awareness project for SDG 12.3. Prototype with sample data.</span>
+  <span><a href="https://instagram.com/foodloop.apu" rel="noopener">Follow @foodloop.apu on Instagram</a> &middot; <button class="ghost" type="button" id="reset">Reset sample data</button></span>
+ </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+var KEY="foodloop-v1",BASE=128,GOAL=500,MIN=6e4;
+var CATS=["All","Meals","Bakery","Fruit & veg","Drinks"];
+var TIPS=[["Cooked rice","Cool it within 1 hour and keep it in the fridge. Eat within 1 day and reheat until steaming hot."],["Bread and rolls","Keep at room temperature for 3 to 4 days. Freeze slices to extend life by weeks."],["Ripe bananas","Peel and freeze for smoothies or baking. Do not share if mouldy."],["Leafy greens","Wrap in a damp paper towel and keep in the fridge for 3 to 5 days."],["Cooked chicken","Refrigerate within 2 hours. Eat within 3 days and reheat until piping hot."],["Opened milk","Keep in the fridge and use within 3 days. Check the use-by date first."]];
+var st={items:[],claims:0},filter="All",q="",sort="soon";
+var LV=[[0,"Seedling"],[30,"Sprout"],[80,"Food Saver"],[150,"Loop Champion"],[300,"Zero-Waste Hero"]];
+var BG=[["first","First share"],["pic","Photo pro"],["claim","Hungry helper"],["quiz","Quiz whiz"]];
+var BOTS=[["Nasi Ninja",120],["GreenGuru",85],["BinBuster",52],["LeftoverLara",25]];
+var EMO={"Meals":["🍛","#FFE3A3"],"Bakery":["🥪","#F6D7B0"],"Fruit & veg":["🍎","#CDEBC5"],"Drinks":["🧋","#CFE3F5"]};
+var QS=[{q:"What does SDG 12.3 aim to do?",o:["Halve food waste per person by 2030","Ban all restaurants","Stop all farming"],a:0,e:"Target 12.3 aims to halve per-person food waste at retail and consumer level by 2030."},
+{q:"About how much of the food made for people is lost or wasted worldwide?",o:["About 1%","About one third","About 90%"],a:1,e:"Roughly one third is lost or wasted (UN FAO estimate)."},
+{q:"What does a 'best before' date mostly tell you?",o:["The food is unsafe after it","Best before and use by mean the same","Mostly quality, not safety"],a:2,e:"Best before is about quality. Use by is the safety date."}];
+function em(c){var e=EMO[c]||EMO.Meals;return"data:image/svg+xml,"+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120"><rect width="200" height="120" fill="'+e[1]+'"/><text x="100" y="82" font-size="64" text-anchor="middle">'+e[0]+'</text></svg>')}
+function fix(){st.mine=st.mine||[];st.pts=st.pts||0;st.nick=st.nick||"";st.bd=st.bd||{};st.qa=st.qa||{};st.sh=st.sh||0;st.ph=st.ph||0;st.cl=st.cl||0;st.items.forEach(function(i){if(!i.img&&i.id.charAt(0)==="a")i.img=em(i.cat)})}
+var pic="";
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})};
+function seed(){var n=Date.now();return{claims:0,mine:[],items:[
+{id:"a1",name:"Nasi lemak packs",cat:"Meals",q:6,loc:"Cafeteria Block B",by:n+45*MIN},
+{id:"a2",name:"Chicken sandwiches",cat:"Bakery",q:8,loc:"Student hub",by:n+150*MIN},
+{id:"a3",name:"Mixed fruit cups",cat:"Fruit & veg",q:5,loc:"Library lobby",by:n+95*MIN},
+{id:"a4",name:"Garlic bread loaves",cat:"Bakery",q:3,loc:"Residence lobby A",by:n+210*MIN},
+{id:"a5",name:"Cold coffee bottles",cat:"Drinks",q:10,loc:"Student hub",by:n+30*MIN+20*MIN},
+{id:"a6",name:"Vegetable fried rice",cat:"Meals",q:4,loc:"Cafeteria Block B",by:n+240*MIN}]}}
+function load(){try{var r=JSON.parse(localStorage.getItem(KEY));if(r&&r.items)return r}catch(e){}return seed()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function fmt(ms){if(ms<=0)return"Closed";var m=Math.ceil(ms/MIN),h=Math.floor(m/60);return h?h+"h "+(m%60)+"m":m+" min"}
+function toast(t){var e=$("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(function(){e.classList.remove("on")},2600)}
+function chips(){$("chips").innerHTML=CATS.map(function(c){return'<button type="button" class="chip" data-c="'+esc(c)+'" aria-pressed="'+(c===filter)+'">'+esc(c)+'</button>'}).join("")}
+function board(focusId){
+ var now=Date.now(),list=st.items.filter(function(i){return(filter==="All"||i.cat===filter)&&(!q||(i.name+" "+i.loc).toLowerCase().indexOf(q)>-1)}).sort(function(a,b){return sort==="most"?b.q-a.q:a.by-b.by});
+ $("list").innerHTML=list.length?list.map(function(i){
+  var left=i.by-now,open=left>0&&i.q>0,u=left>0&&left<45*MIN;
+  var btn=i.q<=0?'<button class="btn" disabled>All claimed</button>':left<=0?'<button class="btn" disabled>Pickup closed</button>':'<button class="btn" data-claim="'+i.id+'" aria-label="Claim one portion of '+esc(i.name)+'">Claim 1 portion</button>';
+  return'<li class="item"><div class="n">'+i.q+'<small>left</small></div><div class="b">'+(i.img&&i.img.indexOf("data:image/")===0?'<img class="ph" src="'+i.img+'" alt="'+(i.id.charAt(0)==="a"?"Picture of ":"Photo of ")+esc(i.name)+'">':'')+'<h3>'+esc(i.name)+'</h3><p class="meta">'+esc(i.cat)+' at '+esc(i.loc)+(i.giver?', shared by '+esc(i.giver):'')+'<br><span class="left'+(u?' urgent':'')+'">'+(left>0?'Closes in '+fmt(left):'Pickup closed')+'</span></p>'+btn+'</div></li>'}).join(""):'<li class="empty">Nothing here yet. Post your surplus food below to start the loop.</li>';
+ if(focusId){var f=document.querySelector('[data-claim="'+focusId+'"]');if(f)f.focus()}
+ soon();
+}
+function soon(){
+ var now=Date.now(),o=st.items.filter(function(i){return i.by>now&&i.q>0}).sort(function(a,b){return a.by-b.by})[0];
+ $("soonT").textContent=o?fmt(o.by-now):"None open";
+ $("soonN").textContent=o?o.q+" x "+o.name+" at "+o.loc:"Post surplus food to fill the board.";
+}
+function cu(id,to){var e=$(id),from=parseInt(e.textContent,10)||0;if(from===to||matchMedia("(prefers-reduced-motion: reduce)").matches){e.textContent=to;return}var t0=performance.now();(function s(t){var p=Math.min(1,(t-t0)/700);e.textContent=Math.round(from+(to-from)*p);if(p<1)requestAnimationFrame(s)})(t0)}
+function impact(){
+ var m=BASE+st.claims,k=Math.round(m*.4),c=Math.round(k*2.5);
+ cu("sM",m);cu("sK",k);cu("sC",c);
+ var p=Math.min(100,Math.round(m/GOAL*100));$("pf").style.width=p+"%";$("pb").setAttribute("aria-valuenow",Math.min(m,GOAL));
+ $("pt").textContent=p+"% of the "+GOAL+"-meal goal";
+}
+function mine(){var m=st.mine||[],n=Date.now();$("mine").innerHTML=m.length?'<h3>My claims</h3><ul>'+m.map(function(x){var it=st.items.filter(function(i){return i.id===x.iid})[0],left=it?it.by-n:0;return'<li><span><b>'+esc(x.name)+'</b> at '+esc(x.loc)+'. Show code <b class="code">'+x.code+'</b>. '+(left>0?'Collect within '+fmt(left):'Pickup closed')+'</span><button type="button" class="ghost" data-cancel="'+x.id+'">Cancel claim</button></li>'}).join("")+'</ul>':''}
+function chk(){var n=0;for(var k in st.qa)if(st.qa[k]===1)n++;if(st.sh>0)st.bd.first=1;if(st.ph>0)st.bd.pic=1;if(st.cl>0)st.bd.claim=1;if(n===QS.length)st.bd.quiz=1}
+function quiz(){$("qz").innerHTML=QS.map(function(x,qi){var d=st.qa[qi]!==undefined;return'<div style="margin-bottom:20px"><p style="font-weight:700;margin:0 0 8px">'+(qi+1)+'. '+x.q+'</p><div class="chips" style="margin:0">'+x.o.map(function(o,oi){return'<button type="button" class="chip" data-q="'+qi+'" data-o="'+oi+'"'+(d?' disabled':'')+'>'+o+'</button>'}).join("")+'</div>'+(d?'<p class="meta" style="margin:8px 0 0">'+(st.qa[qi]?'Correct! ':'Not quite. ')+x.e+'</p>':'')+'</div>'}).join("")}
+function game(){var p=st.pts,i=0;for(var j=0;j<LV.length;j++)if(p>=LV[j][0])i=j;var nx=LV[i+1];
+ $("pp").textContent=p;$("pl").textContent="Level "+(i+1)+": "+LV[i][1];
+ var pc=nx?Math.round((p-LV[i][0])/(nx[0]-LV[i][0])*100):100;$("lvf").style.width=pc+"%";$("lvb").setAttribute("aria-valuenow",pc);
+ $("pn").textContent=nx?(nx[0]-p)+" points to reach "+nx[1]:"Top level reached. Share your score to inspire others.";
+ $("bd").innerHTML=BG.map(function(b){var on=st.bd[b[0]];return'<li class="'+(on?"on":"")+'">'+(on?"Earned: ":"Locked: ")+b[1]+'</li>'}).join("");
+ var rows=BOTS.map(function(b){return[b[0],b[1],0]}).concat([[st.nick||"You",p,1]]).sort(function(a,b){return b[1]-a[1]});
+ $("lb").innerHTML=rows.map(function(r,k){return'<li class="'+(r[2]?"me":"")+'"><span>'+(k+1)+'. '+esc(r[0])+(r[2]?" (you)":"")+'</span><span>'+r[1]+' pts</span></li>'}).join("");
+ quiz()}
+function all(f){board(f);impact();mine();game()}
+document.addEventListener("click",function(e){
+ var z=e.target.closest("[data-q]");if(z&&!z.disabled){var qi=+z.dataset.q;if(st.qa[qi]===undefined){var ok=+z.dataset.o===QS[qi].a;st.qa[qi]=ok?1:0;if(ok)st.pts+=5;chk();save();all();toast(ok?"Correct! +5 points":"Not quite. Read the answer below the question.")}return}
+ var x=e.target.closest("[data-cancel]");if(x){var m=(st.mine||[]).filter(function(y){return y.id===x.dataset.cancel})[0];if(m){st.mine=st.mine.filter(function(y){return y!==m});var o=st.items.filter(function(i){return i.id===m.iid})[0];if(o)o.q++;st.claims=Math.max(0,st.claims-1);st.cl=Math.max(0,st.cl-1);st.pts=Math.max(0,st.pts-5);save();all();toast("Claim cancelled. The portion is back on the board.")}return}
+ var c=e.target.closest("[data-claim]");
+ if(c){var it=st.items.filter(function(i){return i.id===c.dataset.claim})[0];
+  if(it&&it.q>0&&it.by>Date.now()){var cd="FL-"+(1000+Math.floor(Math.random()*9000));it.q--;st.claims++;st.cl++;st.pts+=5;chk();st.mine=st.mine||[];st.mine.push({id:"m"+Date.now(),iid:it.id,name:it.name,loc:it.loc,code:cd});save();all(it.id);toast("Claimed 1 portion of "+it.name+". Show code "+cd+" at "+it.loc+". +5 points")}return}
+ var h=e.target.closest(".chip");if(h){filter=h.dataset.c;chips();board();$("chips").querySelector('[aria-pressed="true"]').focus()}
+});
+$("share").addEventListener("submit",function(e){
+ e.preventDefault();
+ var n=$("fn").value.trim(),l=$("fl").value.trim(),q=parseInt($("fq").value,10);
+ if(!n||!l){$("err").textContent="Enter the food name and the pickup point.";(!n?$("fn"):$("fl")).focus();return}
+ if(!(q>=1&&q<=50)){$("err").textContent="Portions must be a number from 1 to 50.";$("fq").focus();return}
+ $("err").textContent="";
+ st.items.push({id:"u"+Date.now(),name:n,cat:$("fc").value,q:q,loc:l,giver:st.nick||"a neighbour",img:pic||em($("fc").value),by:Date.now()+parseInt($("ft").value,10)*MIN});
+ var g=10+(pic?5:0);st.pts+=g;st.sh++;if(pic)st.ph++;chk();pic="";$("pv").hidden=true;save();filter="All";chips();all();$("share").reset();$("fq").value=4;$("ft").value=60;toast("Posted! "+n+" is on the board. +"+g+" points");
+});
+$("reset").addEventListener("click",function(){st=seed();fix();save();filter="All";chips();all();toast("Sample data restored.")});
+(function(){var s=$("ts");s.innerHTML=TIPS.map(function(t,i){return'<option value="'+i+'">'+t[0]+'</option>'}).join("");
+ function show(){var t=TIPS[s.value];$("tt").textContent=t[0];$("tp").textContent=t[1]}s.addEventListener("change",show);show()})();
+var root=document.documentElement;
+try{var th=localStorage.getItem("foodloop-theme");if(th)root.setAttribute("data-theme",th)}catch(e){}
+$("theme").addEventListener("click",function(){
+ var dark=root.getAttribute("data-theme")?root.getAttribute("data-theme")==="dark":matchMedia("(prefers-color-scheme: dark)").matches;
+ var n=dark?"light":"dark";root.setAttribute("data-theme",n);try{localStorage.setItem("foodloop-theme",n)}catch(e){}
+});
+var cw=$("cw");function calc(){var w=+cw.value,k=Math.round(w*.4*52);$("cv").textContent=w;$("cr").textContent="About "+k+" kg of food a year and "+Math.round(k*2.5)+" kg CO\u2082e. That is "+(w*52)+" meals."}
+cw.addEventListener("input",calc);calc();
+$("sq").addEventListener("input",function(){q=this.value.trim().toLowerCase();board()});
+$("so").addEventListener("change",function(){sort=this.value;board()});
+$("fp").addEventListener("change",function(){var f=this.files[0];pic="";$("pv").hidden=true;if(!f)return;if(f.type.indexOf("image/")!==0){toast("Choose an image file.");this.value="";return}
+var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var s=Math.min(1,480/im.width),c=document.createElement("canvas");c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext("2d").drawImage(im,0,0,c.width,c.height);pic=c.toDataURL("image/jpeg",.7);$("pv").src=pic;$("pv").alt="Preview of your photo";$("pv").hidden=false};im.onerror=function(){toast("That image could not be read.")};im.src=r.result};r.readAsDataURL(f)});
+$("nick").addEventListener("input",function(){st.nick=this.value.trim();save();game()});
+$("shr").addEventListener("click",function(){var t="I have "+st.pts+" points on FoodLoop, fighting food waste (SDG 12.3). Join the loop! @foodloop.apu #FoodLoop #SDG12";try{navigator.clipboard.writeText(t).then(function(){toast("Copied. Paste it on Instagram.")},function(){toast(t)})}catch(e){toast(t)}});
+st=load();fix();$("nick").value=st.nick;chips();all();
+setInterval(function(){if(!$("list").contains(document.activeElement))board();else soon()},3e4);
+})();
+</script>
+</body>
+</html>
